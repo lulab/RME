@@ -1,0 +1,31 @@
+#! /bin/sh
+
+if [ $# -lt 4 ]
+then echo "Usage:
+     $0 [traindata] [testdata] [structureDir] [outdir]"
+	 exit 113
+fi
+EXEPATH={EXEPATH}
+
+traindata=$1
+testdata=$2
+structureDir=$3
+outdir=$4
+pair_ratio=0.534558833156579  # estimated according to a large database of reference structures and used as a constant
+mkdir -p $outdir/PARS
+
+# 1. normalization on raw read counts for different RNAs
+Rscript $EXEPATH/readCountNormalization.R -i $traindata -o $outdir/PARS/`basename $traindata`.normed
+Rscript $EXEPATH/readCountNormalization.R -i $testdata -o $outdir/PARS/`basename $testdata`.normed
+
+# 2. distribution fitting on training RNAs
+Rscript $EXEPATH/distributionFitting.R -i $outdir/PARS/`basename $traindata`.normed -o $outdir/PARS/PARS.pairParameter.txt -d gaussian -c pair
+Rscript $EXEPATH/distributionFitting.R -i $outdir/PARS/`basename $traindata`.normed -o $outdir/PARS/PARS.loopParameter.txt -d gaussian -c loop
+
+# 3. calculation of posterior paring probabilities
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/PARS/`basename $traindata`.normed -O $outdir/PARS -o $outdir/PARS/`basename $traindata`.normed.prob.data -r $pair_ratio -p $outdir/PARS/PARS.pairParameter.txt -l $outdir/PARS/PARS.loopParameter.txt
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/PARS/`basename $testdata`.normed -O $outdir/PARS -o $outdir/PARS/`basename $testdata`.normed.prob.data -r $pair_ratio -p $outdir/PARS/PARS.pairParameter.txt -l $outdir/PARS/PARS.loopParameter.txt
+
+# 4. prepare files for training and test
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/PARS/`basename $traindata`.normed.prob.data train 4 $structureDir/*.ct >$outdir/PARS.for-optimize-parameter.txt
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/PARS/`basename $testdata`.normed.prob.data test 4 $structureDir/*.ct >$outdir/PARS.for-test.txt

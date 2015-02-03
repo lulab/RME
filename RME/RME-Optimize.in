@@ -1,0 +1,5 @@
+#! /bin/sh
+# Shell wrapper for RME-Optimize
+
+export DATAPATH={DATAPATH}/
+{EXEPATH}/RME-Optimize $@

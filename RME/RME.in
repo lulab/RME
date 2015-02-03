@@ -1,0 +1,5 @@
+#! /bin/sh
+# Shell wrapper for RME
+
+export DATAPATH={DATAPATH}/
+{EXEPATH}/RME $@

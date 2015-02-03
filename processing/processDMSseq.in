@@ -1,0 +1,35 @@
+#! /bin/sh
+
+if [ $# -lt 4 ]
+then echo "Usage:
+     $0 [traindata] [testdata] [structureDir] [outdir]"
+	 exit 113
+fi
+EXEPATH={EXEPATH}
+
+traindata=$1
+testdata=$2
+structureDir=$3
+outdir=$4
+pair_ratio=0.534558833156579  # estimated according to a large database of reference structures and used as a constant
+mkdir -p $outdir/DMSseq
+
+# 1. normalization on raw read counts for different RNAs
+Rscript $EXEPATH/readCountNormalization.R -i $traindata -o $outdir/DMSseq/`basename $traindata`.normed
+Rscript $EXEPATH/readCountNormalization.R -i $testdata -o $outdir/DMSseq/`basename $testdata`.normed
+
+# 2. Selection of reactive bases (As and Cs)
+grep -P "^RNA|\tA|\tC" $outdir/DMSseq/`basename $traindata`.normed >$outdir/DMSseq/`basename $traindata`.normed.AC
+grep -P "^RNA|\tA|\tC" $outdir/DMSseq/`basename $testdata`.normed >$outdir/DMSseq/`basename $testdata`.normed.AC
+
+# 3. distribution fitting on training RNAs
+Rscript $EXEPATH/distributionFitting.R -i $outdir/DMSseq/`basename $traindata`.normed.AC -o $outdir/DMSseq/DMSseq.pairParameter.txt -d gaussian -c pair
+Rscript $EXEPATH/distributionFitting.R -i $outdir/DMSseq/`basename $traindata`.normed.AC -o $outdir/DMSseq/DMSseq.loopParameter.txt -d 2gaussian -c loop
+
+# 4. calculation of posterior paring probabilities
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/DMSseq/`basename $traindata`.normed.AC -O  $outdir/DMSseq -o $outdir/DMSseq/`basename $traindata`.normed.AC.prob.data -r $pair_ratio -p $outdir/DMSseq/DMSseq.pairParameter.txt -l $outdir/DMSseq/DMSseq.loopParameter.txt
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/DMSseq/`basename $testdata`.normed.AC -O  $outdir/DMSseq -o $outdir/DMSseq/`basename $testdata`.normed.AC.prob.data -r $pair_ratio -p $outdir/DMSseq/DMSseq.pairParameter.txt -l $outdir/DMSseq/DMSseq.loopParameter.txt
+
+# 5. prepare files for training and test
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/DMSseq/`basename $traindata`.normed.AC.prob.data train 4 $structureDir/*.ct >$outdir/DMSseq.for-optimize-parameter.txt
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/DMSseq/`basename $testdata`.normed.AC.prob.data test 4 $structureDir/*.ct >$outdir/DMSseq.for-test.txt
