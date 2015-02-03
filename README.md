@@ -1,4 +1,4 @@
-# RME: Predict RNA secondary structure by integrating free energy model constraints derived from various experimental data
+# RME: Improved prediction of RNA secondary structure by integrating the free energy model with restraints derived from experimental mapping data
 
 A tool for RNA secondary structure prediction with various types of experimental probing data. It can use experimental pairing probabilities to constrain the Partition Function, and predict the structure with maximum constrained expected accuray based on a MEA algorithm, MaxExpect (Lu *et al*., 2009 *RNA* ). It is based on the *RNAstructure* package. It also provides example scripts for transforming the SHAPE, PARS and DMS-seq data into pairing probability according a Posterior Probabilistic Model. Moreover, it also contains a utility for optimizing the parameters of RME by RME-Optimize.
 
@@ -7,7 +7,7 @@ For updates, please refer to https://github.com/lulab/RME
 
 ## Citation
 
-Yang Wu, Binbin Shi *et al*., (2015) RME: Predict RNA secondary structure by integrating free energy model constraints derived from various experimental data.
+Yang Wu, Binbin Shi *et al*., (2015) Improved prediction of RNA secondary structure by integrating the free energy model with restraints derived from experimental mapping data.
 
 
 ## License
