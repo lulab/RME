@@ -1,13 +1,13 @@
-# RME: Improved prediction of RNA secondary structure by integrating the free energy model with restraints derived from experimental mapping data
+# Improved prediction of RNA secondary structure by integrating the free energy model with restraints derived from experimental probing data
 
-A tool for RNA secondary structure prediction with various types of experimental mapping data. It can use experimental pairing probabilities to restrain the Partition Function, and predict the structure with maximum restrained expected accuray based on a MEA algorithm, MaxExpect (Lu *et al*., 2009 *RNA* ). It is based on the *RNAstructure* package. It also provides example scripts for transforming the SHAPE, PARS and DMS-seq data into pairing probability according a Posterior Probabilistic Model. Moreover, it also contains a utility for optimizing the parameters of RME by RME-Optimize.
+A tool for RNA secondary structure prediction with various types of experimental probing data. It can use experimental pairing probabilities to restrain the Partition Function, and predict the structure with maximum restrained expected accuray based on a MEA algorithm, MaxExpect (Lu *et al*., 2009 *RNA* ). It is based on the *RNAstructure* package. It also provides example scripts for transforming the SHAPE, PARS and DMS-seq data into pairing probability according a Posterior Probabilistic Model. Moreover, it also contains a utility for optimizing the parameters of RME by RME-Optimize.
 
 For updates, please refer to https://github.com/lulab/RME
 
 
 ## Citation
 
-Yang Wu, Binbin Shi *et al*., (2015) Improved prediction of RNA secondary structure by integrating the free energy model with restraints derived from experimental mapping data.
+Yang Wu, Binbin Shi *et al*., (2015) Improved prediction of RNA secondary structure by integrating the free energy model with restraints derived from experimental probing data.
 
 
 ## License
@@ -74,14 +74,14 @@ example/dat/data/DMSseq.test.data
 ```
 #### c. Format of data files
 
-For 1-dimensional mapping data (i.e. SHAPE data), training files contains 5 columns separated by tabs or spaces.
+For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 columns separated by tabs or spaces.
 - column 1    name of RNA
 - column 2    index on the RNA, 1-based
 - column 3    reactivity on this base
 - column 4    base information in capitals, ACGU
 - column 5    structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases
 
-For 2-dimensional mapping data (i.e. PARS and DMS-seq data), training files contains 6 columns.
+For 2-dimensional probing data (i.e. PARS and DMS-seq data), training files contains 6 columns.
 - column 1    name of RNA
 - column 2    index on the RNA, 1-based
 - column 3    read count 1 for this base, V1 for PARS data and control for DMS-seq data
@@ -90,11 +90,11 @@ For 2-dimensional mapping data (i.e. PARS and DMS-seq data), training files cont
 - column 6    structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases
 
 Files for test RNAs are similar with training files except that the last column (structure information) is missing.
-Note that bases with mapping signals are not included in these files. 
+Note that bases with probing signals are not included in these files. 
 
 
 
-### Step 2: transform structure mapping data into pairing probability  
+### Step 2: transform structure probing data into pairing probability  
 
 #### a. Run preprocessing scripts
 
