@@ -204,8 +204,7 @@ void Scorer_Interface::run() {
 			    << "Predicted Structure: " << predicted << endl
 			    << "Score of Predicted Structure " << i << ":" << endl
 			    << sensitivity.str() << endl
-			    << ppv.str()
-			    << endl << endl;
+			    << ppv.str() << endl << endl;
 
 			// Print message saying calculation of a particular sensitivity and PPV are done.
 			cout << "done." << endl;
