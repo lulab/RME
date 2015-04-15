@@ -87,8 +87,8 @@ example/dat/data/DMSseq.test.data
 
 For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 columns separated by a TAB.
 
-| column | description |
-| ---- | ------------- |
+| Column | Description |
+|: ---- :| ------------- |
 | 1 |  name of RNA |
 | 2 |  index on the RNA, 1-based |
 | 3 |  reactivity on this base |
@@ -96,12 +96,15 @@ For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 colu
 | 5 |  structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases |
 
 For 2-dimensional probing data (i.e. PARS and DMS-seq data), training files contains 6 columns by a TAB.
-- column 1    name of RNA
-- column 2    index on the RNA, 1-based
-- column 3    read count 1 for this base, V1 for PARS data and control for DMS-seq data
-- column 4    read count 2 for this base, S1 for PARS data and vivo for DMS-seq data
-- column 5    base information in capitals, ACGU
-- column 6    structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases
+
+| Column | Description |
+|: ---- :| ------------- |
+| 1 |  name of RNA |
+| 2 |  index on the RNA, 1-based |
+| 3 |  read count 1 for this base, V1 for PARS data and control for DMS-seq data |
+| 4 |  read count 2 for this base, S1 for PARS data and vivo for DMS-seq data |
+| 5 |  base information in capitals, ACGU |
+| 6 |  structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases |
 
 Files for test RNAs are similar with training files except that the last column (structure information) is missing.
 Note that bases with probing signals are not included in these files. See example/dat/data/README for detail.
