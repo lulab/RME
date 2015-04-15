@@ -88,7 +88,7 @@ example/dat/data/DMSseq.test.data
 For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 columns separated by a TAB.
 
 | Column | Description |
-|: ---- :| ------------- |
+|:----:| ------------- |
 | 1 |  name of RNA |
 | 2 |  index on the RNA, 1-based |
 | 3 |  reactivity on this base |
@@ -98,7 +98,7 @@ For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 colu
 For 2-dimensional probing data (i.e. PARS and DMS-seq data), training files contains 6 columns by a TAB.
 
 | Column | Description |
-|: ---- :| ------------- |
+|:----:| ------------- |
 | 1 |  name of RNA |
 | 2 |  index on the RNA, 1-based |
 | 3 |  read count 1 for this base, V1 for PARS data and control for DMS-seq data |
