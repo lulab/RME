@@ -86,11 +86,11 @@ example/dat/data/DMSseq.test.data
 #### d. Format of data files
 
 For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 columns separated by a TAB.
-- column 1    name of RNA
-- column 2    index on the RNA, 1-based
-- column 3    reactivity on this base
-- column 4    base information in capitals, ACGU
-- column 5    structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases
+| column 1 |  name of RNA |
+| column 2 |  index on the RNA, 1-based |
+| column 3 |  reactivity on this base |
+| column 4 |  base information in capitals, ACGU |
+| column 5 |  structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases |
 
 For 2-dimensional probing data (i.e. PARS and DMS-seq data), training files contains 6 columns by a TAB.
 - column 1    name of RNA
