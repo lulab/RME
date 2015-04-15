@@ -1,6 +1,6 @@
 # RME
 
-A tool for RNA secondary structure prediction with various types of experimental probing data. It can use experimental pairing probabilities to restrain the Partition Function, and predict the structure with maximum restrained expected accuray based on a MEA algorithm, MaxExpect (Lu *et al*., 2009 *RNA* ). It is based on the *RNAstructure* package. It also provides example scripts for transforming the SHAPE, PARS and DMS-seq data into pairing probability according a Posterior Probabilistic Model. Moreover, it also contains a utility for optimizing the parameters of RME by RME-Optimize.
+A tool for RNA secondary structure prediction with various types of experimental probing data. It can use experimental pairing probabilities to restrain the Partition Function, and predict the structure with maximum restrained expected accuray based on a MEA algorithm, MaxExpect (Lu *et al*., 2009 *RNA* ). It is based on the *RNAstructure* (http://rna.urmc.rochester.edu/RNAstructure.html) package. It also provides example scripts for transforming the SHAPE, PARS and DMS-seq data into pairing probability according a Posterior Probabilistic Model. Moreover, it also contains a utility for optimizing the parameters of RME by RME-Optimize.
 
 For updates, please refer to https://github.com/lulab/RME
 
