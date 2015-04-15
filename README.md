@@ -86,6 +86,7 @@ example/dat/data/DMSseq.test.data
 #### d. Format of data files
 
 For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 columns separated by a TAB.
+| -------- | ------------- |
 | column 1 |  name of RNA |
 | column 2 |  index on the RNA, 1-based |
 | column 3 |  reactivity on this base |
