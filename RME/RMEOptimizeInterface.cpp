@@ -8,9 +8,9 @@ using namespace std;
 #include <pthread.h>
 
 // from RNAstructure package
-#include "../src/ErrorChecker.h"
-#include "../src/ParseCommandLine.h"
-#include "../RNA_class/RNA.h"
+#include <src/ErrorChecker.h>
+#include <src/ParseCommandLine.h>
+#include <RNA_class/RNA.h>
 
 #include "RMEPre.h"
 #include "RMEPost.h"

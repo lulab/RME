@@ -6,8 +6,8 @@ using namespace std;
 #include <string.h>
 #include <errno.h>
 //from RNAstructure
-#include "../RNA_class/RNA.h"
-#include "../src/ParseCommandLine.h"
+#include <RNA_class/RNA.h>
+#include <src/ParseCommandLine.h>
 
 #include "Utils.h"
 #include "RMEPre.h"

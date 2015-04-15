@@ -8,7 +8,7 @@
 #include <list>
 #include <pthread.h>
 // from RNAstructure package
-#include "../src/structure.h"
+#include <src/structure.h>
 
 
 #define MAX_PATH_LENGTH		4096

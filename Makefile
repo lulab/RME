@@ -1,15 +1,18 @@
 # complier options
-CXX = g++
-CXXFLAGS = -O3 -fsched-spec-load
-LDFLAGS = -s
-LINK = ${CXX} ${LDFLAGS} -o $@
-INSTALL = install
+
 
 PREFIX = /usr/local
 ROOTPATH = .
+RSPATH = RNAstructure-src
 BINPATH = $(PREFIX)/bin
 EXEPATH = $(PREFIX)/libexec/RME
 DATPATH = $(PREFIX)/share/RME/data_tables
+
+CXX = g++
+CXXFLAGS = -O3 -fsched-spec-load -I${RSPATH}
+LDFLAGS = -s
+LINK = ${CXX} ${LDFLAGS} -o $@
+INSTALL = install
 
 OUTDIRS = bin bin/exec
 
@@ -28,33 +31,33 @@ ALL_BIN = RME RME-Optimize processSHAPE processDMSseq processPARS
 
 # The text interface command line parser.
 CMD_LINE_PARSER = \
-	${ROOTPATH}/src/ParseCommandLine.o
+	${RSPATH}/src/ParseCommandLine.o
 # The utility that scores a structure against another.
 STRUCTURE_SCORER = \
-	${ROOTPATH}/src/score.o
+	${RSPATH}/src/score.o
 # Common files for the RNA library.
 RNA_FILES = \
-	${ROOTPATH}/RNA_class/RNA.o \
-	${ROOTPATH}/RNA_class/thermodynamics.o \
-	${ROOTPATH}/src/algorithm.o \
-	${ROOTPATH}/src/alltrace.o \
-	${ROOTPATH}/src/arrayclass.o \
-	${ROOTPATH}/src/dotarray.o \
-	${ROOTPATH}/src/draw.o \
-	${ROOTPATH}/src/extended_double.o \
-	${ROOTPATH}/src/forceclass.o \
-	${ROOTPATH}/src/MaxExpect.o \
-	${ROOTPATH}/src/MaxExpectStack.o \
-	${ROOTPATH}/src/outputconstraints.o \
-	${ROOTPATH}/src/pfunction.o \
-	${ROOTPATH}/src/probknot.o \
-	${ROOTPATH}/src/random.o \
-	${ROOTPATH}/src/rna_library.o \
-	${ROOTPATH}/src/stackclass.o \
-	${ROOTPATH}/src/stackstruct.o \
-	${ROOTPATH}/src/stochastic.o \
-	${ROOTPATH}/src/structure.o \
-	${ROOTPATH}/src/TProgressDialog.o
+	${RSPATH}/RNA_class/RNA.o \
+	${RSPATH}/RNA_class/thermodynamics.o \
+	${RSPATH}/src/algorithm.o \
+	${RSPATH}/src/alltrace.o \
+	${RSPATH}/src/arrayclass.o \
+	${RSPATH}/src/dotarray.o \
+	${RSPATH}/src/draw.o \
+	${RSPATH}/src/extended_double.o \
+	${RSPATH}/src/forceclass.o \
+	${RSPATH}/src/MaxExpect.o \
+	${RSPATH}/src/MaxExpectStack.o \
+	${RSPATH}/src/outputconstraints.o \
+	${RSPATH}/src/pfunction.o \
+	${RSPATH}/src/probknot.o \
+	${RSPATH}/src/random.o \
+	${RSPATH}/src/rna_library.o \
+	${RSPATH}/src/stackclass.o \
+	${RSPATH}/src/stackstruct.o \
+	${RSPATH}/src/stochastic.o \
+	${RSPATH}/src/structure.o \
+	${RSPATH}/src/TProgressDialog.o
 
 RME_FILES = \
 	${ROOTPATH}/RME/RMEPre.o \
@@ -92,18 +95,18 @@ $(OUTDIRS):
 	
 # Build the ct2dot text interface.
 ct2dot: bin/ct2dot
-bin/ct2dot: ct2dot/ct2dot.o ${CMD_LINE_PARSER} ${RNA_FILES}
-	${LINK} ct2dot/ct2dot.o ${CMD_LINE_PARSER} ${RNA_FILES}
+bin/ct2dot: ${RSPATH}/ct2dot/ct2dot.o ${CMD_LINE_PARSER} ${RNA_FILES}
+	${LINK} ${RSPATH}/ct2dot/ct2dot.o ${CMD_LINE_PARSER} ${RNA_FILES}
 
 # Build the dot2ct text interface.
 dot2ct: bin/dot2ct
-bin/dot2ct: dot2ct/dot2ct.o ${CMD_LINE_PARSER} ${RNA_FILES}
-	${LINK} dot2ct/dot2ct.o ${CMD_LINE_PARSER} ${RNA_FILES}
+bin/dot2ct: ${RSPATH}/dot2ct/dot2ct.o ${CMD_LINE_PARSER} ${RNA_FILES}
+	${LINK} ${RSPATH}/dot2ct/dot2ct.o ${CMD_LINE_PARSER} ${RNA_FILES}
 
 # Build the scorer interface.
 scorer: bin/scorer
-bin/scorer: scorer/Scorer_Interface.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
-	${LINK} scorer/Scorer_Interface.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
+bin/scorer: ${RSPATH}/scorer/Scorer_Interface.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
+	${LINK} ${RSPATH}/scorer/Scorer_Interface.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
 	
 # Build RME
 RME: bin/RME bin/RME-Optimize
@@ -117,10 +120,10 @@ bin/RME-Optimize:  RME/RME-Optimize.in bin/exec/RME-Optimize
 	chmod 755 $@
 	
 bin/exec/RME:  RME/RMEInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
-	${LINK} RME/RMEInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread
+	${LINK} ${ROOTPATH}/RME/RMEInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread
 	
 bin/exec/RME-Optimize:  RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
-	${LINK} RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread 
+	${LINK} ${ROOTPATH}/RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread 
 
 processing: $(PROC_BIN_OUT) $(PROC_EXE_OUT)
 

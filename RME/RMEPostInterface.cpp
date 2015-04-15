@@ -2,9 +2,9 @@
 #include <cstdlib>
 using namespace std;
 // from RNAstructure package
-#include "../src/ErrorChecker.h"
-#include "../src/ParseCommandLine.h"
-#include "../RNA_class/RNA.h"
+#include <src/ErrorChecker.h>
+#include <src/ParseCommandLine.h>
+#include <RNA_class/RNA.h>
 
 #include "RMEPost.h"
 #include "Utils.h"

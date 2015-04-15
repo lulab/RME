@@ -13,7 +13,7 @@ using namespace std;
 #include <errno.h>
 
 // from RNAstructure package
-#include "../src/score.h"
+#include <src/score.h>
 
 #include "Utils.h"
 

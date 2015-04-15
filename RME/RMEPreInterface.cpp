@@ -2,8 +2,8 @@
 #include <cstdlib>
 using namespace std;
 // from RNAstructure package
-#include "../src/ParseCommandLine.h"
-#include "../RNA_class/RNA.h"
+#include <src/ParseCommandLine.h>
+#include <RNA_class/RNA.h>
 
 #include "RMEPre.h"
 #include "Utils.h"
