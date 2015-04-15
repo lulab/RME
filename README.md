@@ -14,6 +14,9 @@ Yang Wu, Binbin Shi *et al*., (2015) Improved prediction of RNA secondary struct
 
 RME is free for non-commercial research. For commercial use, please contact the authors.
 
+## Download
+
+Please download the software from https://github.com/lulab/RME/releases
 
 ## Prerequisites
 
