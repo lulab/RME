@@ -1,0 +1,33 @@
+# Format of structure files
+
+>>>>> files for training RNAs
+
+Structure files is in standard CT format and with a .ct suffix in names. 
+
+The first line indicates the length and name of RNA. Other lines provided the index, structure and structure of each base. 6 columns seperated by several blanks is required except for the header line.
+
+Example: 
+
+  608  yeast.rRNA_RDN18-1_d1
+    1 U       0    2    0    1
+    2 A       1    3    0    2
+    3 U       2    4    0    3
+    4 C       3    5   20    4
+
+
+>>>>> files for test RNAs
+
+Similar with training files expect that the 5th column can be meaningless (ignorable).
+
+Example: 
+
+  608  yeast.rRNA_RDN18-1_d1
+    1 U       0    2    0    1
+    2 A       1    3    0    2
+    3 U       2    4    0    3
+    4 C       3    5    0    4
+    5 U       4    6    0    5
+    6 G       5    7    0    6
+    7 G       6    8    0    7
+    8 U       7    9    0    8
+    9 U       8   10    0    9

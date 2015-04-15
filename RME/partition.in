@@ -1,0 +1,5 @@
+#! /bin/bash
+# Shell wrapper for partition
+
+export DATAPATH=`dirname $BASH_SOURCE`/../{DATAPATH}/
+`dirname $BASH_SOURCE`/../{EXEPATH}/partition $@

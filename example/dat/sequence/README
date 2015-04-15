@@ -1,0 +1,6 @@
+# Format of sequence files
+
+Sequence files in standard FASTA format and with a .fa suffix in names.
+
+Only required when you want to calculate the prior probability of paired bases according to the partition function. In this case, sequences of all RNAs, including training and testing, is needed.
+

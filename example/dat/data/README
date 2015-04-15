@@ -17,9 +17,9 @@ For 2-dimensional probing data (i.e. PARS and DMS-seq data), training files cont
     column 5    base information in capitals, ACGU
     column 6    structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases
 
-Note that bases with probing signals are not included in these files
+Note that bases with probing signals are not included in these files. And columns should be seperated by a Tab character. 
 
 
 >>>>> files for test RNAs
 
-similar with training files expect that the last column (structure information) is missing.
+Similar with training files expect that the last column (structure information) is missing.

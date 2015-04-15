@@ -1,0 +1,58 @@
+#! /bin/sh
+
+if [ $# -lt 5 ]
+then echo "Usage:
+     $0 [traindata] [testdata] [structureDir] [outdir] [pairRatioFile] [outlierMode] [bottomOutlier] [topOutlier]
+        
+        traindata      file containing training data, e.g. example/dat/data/DMSseq.train.25SrRNA.data
+        testdata       file containing test data, e.g. example/dat/data/DMSseq.test.data
+        structureDir   directory containing structure files for all RNAs, e.g. example/dat/structure/
+        outDir         directory for output files, e.g. example/1.processing-data/
+        pairRatioFile  file providing class prior for paired bases, e.g. example/dat/paired_ratio/pair_ratio.txt
+
+        outlierMode    mode for dealing with outliers, OPTIONAL, default is 'use'
+            use     use outliers normally 
+            cap     cap outliers to topOutlier (reset data larger than it to it) and bottomOutlier (reset data smaller than it to it)
+            filter  filter outliers and not use them in either training or testing
+        bottomOutlier  define data as outlier if it below the bottomOutlier, default is the minimum, OPTIONAL
+        topOutlier     define data as outlier if it exceed the topOutlier, default is the maximum, OPTIONAL
+
+    Example: processDMSseq example/dat/data/DMSseq.train.25SrRNA.data example/dat/data/DMSseq.test.data example/dat/structure example/1.processing-data example/dat/paired_ratio/pair_ratio.txt 
+             processDMSseq example/dat/data/DMSseq.train.25SrRNA.data example/dat/data/DMSseq.test.data example/dat/structure example/1.processing-data example/dat/paired_ratio/pair_ratio.txt cap -0.5 0.5
+"
+    exit 113
+fi
+EXEPATH=`dirname $BASH_SOURCE`
+
+traindata=$1
+testdata=$2
+structureDir=$3
+outdir=$4
+pair_ratio=$5 
+if [ $# -ge 6 ]; then outlierMode=$6; else outlierMode='use'; fi
+mkdir -p $outdir/DMSseq
+
+# 1. normalization on raw read counts for different RNAs
+Rscript $EXEPATH/readCountNormalization.R -i $traindata -o $outdir/DMSseq/`basename $traindata`.normed
+Rscript $EXEPATH/readCountNormalization.R -i $testdata -o $outdir/DMSseq/`basename $testdata`.normed
+
+# 2. Selection of reactive bases (As and Cs)
+grep -P "^RNA|\tA|\tC" $outdir/DMSseq/`basename $traindata`.normed >$outdir/DMSseq/`basename $traindata`.normed.AC
+grep -P "^RNA|\tA|\tC" $outdir/DMSseq/`basename $testdata`.normed >$outdir/DMSseq/`basename $testdata`.normed.AC
+
+# 3. get data range for outlier definition
+cat $outdir/DMSseq/`basename $traindata`.normed.AC $outdir/DMSseq/`basename $testdata`.normed.AC >$outdir/DMSseq/DMSseq.data-range.txt
+if [ $# -ge 7 ]; then bottomOutlier=$7; else bottomOutlier=`cat $outdir/DMSseq/DMSseq.data-range.txt |grep -v "Reactivity" |awk -v min=10000 'NR!=1{if($3<min) min=$3} END {print min}'`; fi
+if [ $# -ge 8 ]; then topOutlier=$8; else topOutlier=`cat $outdir/DMSseq/DMSseq.data-range.txt |grep -v "Reactivity" |awk -v max=-10000 'NR!=1{if($3>max) max=$3} END {print max}'`; fi
+
+# 4. distribution fitting on training RNAs
+Rscript $EXEPATH/distributionFitting.R -i $outdir/DMSseq/`basename $traindata`.normed.AC -o $outdir/DMSseq/DMSseq.pairParameter.txt -d gaussian -c pair
+Rscript $EXEPATH/distributionFitting.R -i $outdir/DMSseq/`basename $traindata`.normed.AC -o $outdir/DMSseq/DMSseq.loopParameter.txt -d 2gaussian -c loop
+
+# 5. calculation of posterior paring probabilities
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/DMSseq/`basename $traindata`.normed.AC -O  $outdir/DMSseq -o $outdir/DMSseq/`basename $traindata`.normed.AC.prob.data -r $pair_ratio -p $outdir/DMSseq/DMSseq.pairParameter.txt -l $outdir/DMSseq/DMSseq.loopParameter.txt -m $outlierMode -b $bottomOutlier -t $topOutlier
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/DMSseq/`basename $testdata`.normed.AC -O  $outdir/DMSseq -o $outdir/DMSseq/`basename $testdata`.normed.AC.prob.data -r $pair_ratio -p $outdir/DMSseq/DMSseq.pairParameter.txt -l $outdir/DMSseq/DMSseq.loopParameter.txt -m $outlierMode -b $bottomOutlier -t $topOutlier
+
+# 6. prepare files for training and test
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/DMSseq/`basename $traindata`.normed.AC.prob.data train 4 $structureDir/*.ct >$outdir/DMSseq.for-optimize-parameter.txt
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/DMSseq/`basename $testdata`.normed.AC.prob.data test 4 $structureDir/*.ct >$outdir/DMSseq.for-test.txt

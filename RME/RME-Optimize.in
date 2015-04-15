@@ -1,5 +1,5 @@
 #! /bin/sh
 # Shell wrapper for RME-Optimize
 
-export DATAPATH={DATAPATH}/
-{EXEPATH}/RME-Optimize $@
+export DATAPATH=`dirname $BASH_SOURCE`/../{DATAPATH}/
+`dirname $BASH_SOURCE`/../{EXEPATH}/RME-Optimize $@

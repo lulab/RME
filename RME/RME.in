@@ -1,5 +1,5 @@
-#! /bin/sh
+#! /bin/bash
 # Shell wrapper for RME
 
-export DATAPATH={DATAPATH}/
-{EXEPATH}/RME $@
+export DATAPATH=`dirname $BASH_SOURCE`/../{DATAPATH}/
+`dirname $BASH_SOURCE`/../{EXEPATH}/RME $@

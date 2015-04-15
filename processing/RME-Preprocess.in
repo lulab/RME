@@ -1,0 +1,352 @@
+#! /usr/bin/env perl
+use strict;
+use warnings;
+use Getopt::Std;
+
+
+# >>> Get arguments
+my %opts;
+getopts('hd:s:n:r:f:q:p:o:v:', \%opts);
+if (defined $opts{'h'}) {
+	&longMessages();
+}
+unless (defined $opts{'d'} && defined $opts{'s'} && @ARGV == 3) {
+	&shortMessages();
+}
+
+my $EXEPATH = "libexec/RME";  # libexec/RME
+my $DATAPATH = "share/RME/data_tables";  # share/RME/data_tables
+$EXEPATH = &getRootPath().$EXEPATH;
+$DATAPATH = &getRootPath().$DATAPATH;
+
+my $trainData = $ARGV[0];
+my $testData = $ARGV[1];
+my $outDir = $ARGV[2];
+
+my $datatype = $opts{'d'};
+my $structureDir = $opts{'s'};
+my $normMode = $opts{'n'};
+my $pairRatioMode = $opts{'r'};
+my $pairRatioFile = $opts{'f'};
+my $sequenceDir = $opts{'q'};
+my $cpunumber = $opts{'p'};
+my $outlierMode = $opts{'o'};
+my $valuerange = $opts{'v'};
+my $bottomOutlier = "";
+my $topOutlier = "";
+
+
+# >>> Check auguments
+# three data types have been implemented
+if ($datatype eq 'SHAPE') {
+	print STDERR "\x1B[31mGet auguments for SHAPE data ...\x1B[0m\n";
+} elsif ($datatype eq 'PARS') {
+	print STDERR "\x1B[31mGet auguments for PARS data ...\x1B[0m\n"
+} elsif ($datatype eq 'DMSseq') {
+	print STDERR "\x1B[31mGet auguments for DMSseq data ...\x1B[0m\n";
+} else {
+	die "\x1B[34mError! The datatype $datatype has not been implemented yet.\x1B[0m\n";
+}
+
+# check the file format for training data
+&checkFileFormat($trainData, $datatype, 'train');
+print STDERR "    Data file for training RNAs: $trainData\n";
+
+# check the file format for test data
+&checkFileFormat($testData, $datatype, 'test');
+print STDERR "    Data file for test RNAs: $testData\n";
+
+# check structure files in structureDir
+&checkStructureDir($structureDir, $trainData, 'train');
+&checkStructureDir($structureDir, $testData, 'test');
+print STDERR "    Structure files for all RNAs: $structureDir/*.ct\n";
+
+# check outDir
+&checkOutDir($outDir);
+print STDERR "    Directory for outfiles: $outDir\n";
+
+
+# >>> Set defaults to optional auguments
+# set default value for $normMode
+$normMode ||= 'quantile';
+if ($datatype eq 'SHAPE') {
+	if ($normMode eq 'quantile') {
+		print STDERR "    Normalization method: quantile normalization (Bolstad et al., 2003)\n";
+	} elsif ($normMode eq '28rule') {
+		print STDERR "    Normalization method: the 2%/8% rule normalization (Ouyang et al., 2013)\n";
+	} elsif ($normMode eq 'no') {
+		print STDERR "    Normalization method: no addtional normalization, use SHAPE reactivity directly\n";
+	} else {
+		die "\x1B[34mError! The normalization strategy has not been implemented yet: $normMode\x1B[0m\n";
+	}
+}
+
+# set default value for $cpunumber 
+$cpunumber ||= 1;
+
+# set default value for $pairRatioFile and $pairRatioMode
+$pairRatioFile ||= "$outDir/$datatype.pair-ratio.txt";
+$pairRatioMode ||= 'constant';
+$sequenceDir ||= "thisoptionisnotinput";
+if ($pairRatioMode eq 'constant') {
+	&pairRatioFromConstant($pairRatioMode, $pairRatioFile);
+	print STDERR "    Mode for paired ratio: using a constant over all RNAs, recorded in $pairRatioFile\n";
+} elsif ($pairRatioMode eq 'train') {
+	&pairRatioFromTrainingRNA($pairRatioFile, $structureDir, $trainData);
+	print STDERR "    Mode for paired ratio: calculating from the training RNAs, recorded in $pairRatioFile\n";
+} elsif ($pairRatioMode eq 'partition') {
+	&pairRatioFromPartitionFunction($pairRatioFile, $trainData, $testData, $cpunumber, $sequenceDir);
+	print STDERR "    Mode for paired ratio: calculating from the partition function for each RNA, recorded in $pairRatioFile\n";
+} else {
+	die "\x1B[34mError! The mode for calculation the paired ratio, P(S=1), has not been implemented yet: $pairRatioMode\x1B[0m\n";
+}
+
+# set default value for $outlierMode
+$outlierMode ||= 'use';
+if ($outlierMode eq 'use') {
+	print STDERR "    Mode for outliers: use all data points ($outlierMode)\n";
+} elsif ($outlierMode eq 'filter') {
+	print STDERR "    Mode for outliers: filter outliers ($outlierMode)\n";
+} elsif ($outlierMode eq 'cap') {
+	print STDERR "    Mode for outliers: cap outliers to the boundary points ($outlierMode)\n";
+} else {
+	die "\x1B[34mError! The outlier mode has not been implemented yet: $outlierMode\x1B[0m\n";
+}
+
+# set default value for $valuerange
+if (defined $valuerange) {  # define outliers by value range
+	($bottomOutlier, $topOutlier) = &getOutlierRange($valuerange, 'value');  # get value range for defining outliers	
+}
+
+
+# >>> Run the main scripts
+if ($datatype eq 'SHAPE') {
+	print STDERR "\x1B[31mPreprossing for SHAPE data ...\x1B[0m\n";
+	system("\nbash $EXEPATH/processSHAPE $trainData $testData $structureDir $outDir $pairRatioFile $normMode $outlierMode $bottomOutlier $topOutlier");
+} elsif ($datatype eq 'PARS') {
+	print STDERR "\x1B[31mPreprossing for PARS data ...\x1B[0m\n";
+	system("bash $EXEPATH/processPARS $trainData $testData $structureDir $outDir $pairRatioFile $outlierMode $bottomOutlier $topOutlier");
+} elsif ($datatype eq 'DMSseq') {
+	print STDERR "\x1B[31mPreprossing for DMSseq data ...\x1B[0m\n";
+	system("bash $EXEPATH/processDMSseq $trainData $testData $structureDir $outDir $pairRatioFile $outlierMode $bottomOutlier $topOutlier");
+}
+
+exit;
+
+
+
+##################################################################
+sub shortMessages {
+    my $shortMessages = qq|Usage: 
+    $0 [options] <trainDatafile> <testDatafile> <outDir>
+        -d     type of the structure probing data, e.g. SHAPE, PARS or DMSseq, RECOMMENDED
+        -s     directory of structure files in CT format (with .ct suffix), e.g. example/dat/structure, RECOMMENDED
+        -h     help message
+
+    e.g: RME-Preprocess -d SHAPE -s example/dat/structure example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/1.processing-data
+         RME-Preprocess -d PARS -s example/dat/structure example/dat/data/PARS.train.25SrRNA.data example/dat/data/PARS.test.data example/1.processing-data
+         RME-Preprocess -d DMSseq -s example/dat/structure example/dat/data/DMSseq.train.25SrRNA.data example/dat/data/DMSseq.test.data example/1.processing-data
+|;
+	die "$shortMessages\n";
+} 
+
+sub longMessages {
+    my $longMessages = qq|Usage: 
+    $0 [options] <trainDatafile> <testDatafile> <outDir>
+        -d     type of the structure probing data, e.g. SHAPE, PARS or DMSseq, RECOMMENDED
+        -s     directory of structure files in CT format (with .ct suffix), e.g. example/dat/structure, RECOMMENDED
+        -h     help message
+
+        -n     mode for SHAPE normalization, quantile/28rule/no normalization is accepted, default is quantile normalization 
+        -r     mode for calculation of the class prior P(S=1), constant/train/partition is implemented, default is constant, 0.535
+        -q     sequence files in FASTA format (with .fa suffix) for calculating the pair ratio from partition function, e.g. example/dat/sequence
+
+    e.g: RME-Preprocess -n 28rule -d SHAPE -s example/dat/structure example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/1.processing-data
+         RME-Preprocess -r train -d PARS -s example/dat/structure example/dat/data/PARS.train.25SrRNA.data example/dat/data/PARS.test.data example/1.processing-data
+         RME-Preprocess -r partition -q example/dat/sequence -d DMSseq -s example/dat/structure example/dat/data/DMSseq.train.25SrRNA.data example/dat/data/DMSseq.test.data example/1.processing-data
+|;
+#        -f     file for storing the pair ratio information calculated by -r, default is \$outDir/pairRatioFile.txt
+#        -p     cpu number, to run in parallel when calculating the pair ratio from partition function, default is 1     
+#        -o     mode for deal with outliers, use/filter/cap can be selected, default is use
+#        -v     define outliers by data range, default is min:max (numbers automatically detected from the datafiles)
+	die "$longMessages\n";
+}
+
+sub checkFileFormat {
+	my ($datafile, $datatype, $mode) = @_;
+	unless (-f $datafile && -r $datafile) {   # unreadable file
+		die "\x1B[34mError! The file for $mode data is not readable: $testData\x1B[0m\n";
+	}
+	my $n = 0;
+	open (IN, $datafile) or die;
+	while (<IN>) {
+		chomp;
+		my @t = split("\t", $_);
+		$n ++;
+		&checkDataLine($datafile, $datatype, $mode, scalar(@t));
+		&checkHeaderLine($datafile, $datatype, $mode, @t) if ($n == 1);  
+	}
+	close (IN);
+}
+
+sub checkHeaderLine {
+	my ($datafile, $datatype, $mode, @header) = @_;
+	die "\x1B[34mError! Incorrect header line in the datafile, $datafile\x1B[0m\n" if ($datatype eq 'SHAPE' && $header[2] ne 'Reactivity');
+
+	if ($mode eq 'train') {
+		die "\x1B[34mError! Incorrect header line in the datafile, $datafile\x1B[0m\n" unless ($header[0] eq 'RNA' && $header[1] eq 'Index' && $header[-2] eq 'Base' && $header[-1] eq 'Structure');
+	} elsif ($mode eq 'test') {
+		die "\x1B[34mError! Incorrect header line in the datafile, $datafile\x1B[0m\n" unless ($header[0] eq 'RNA' && $header[1] eq 'Index' && $header[-1] eq 'Base');
+	} else {
+		die "\x1B[34mError! Only train or test mode is accepted for checking the file format\x1B[0m\n";
+	}
+}
+
+sub checkDataLine {
+	my ($datafile, $datatype, $mode, $colnumber) = @_;
+	if ($mode eq 'train') {
+		if ($datatype eq 'SHAPE') {
+			die "\x1B[34mError! Incorrect column number in the datafile, $datafile\x1B[0m\n" unless ($colnumber == 5);
+		} elsif ($datatype eq 'PARS' or $datatype eq 'DMSseq') {
+			die "\x1B[34mError! Incorrect column number in the datafile, $datafile\x1B[0m" unless ($colnumber == 6);
+		} else {
+			die "\x1B[34mError! Only SHAPE, PARS or DMSseq data is is accepted for checking the file format, $datafile\x1B[0m\n";
+		}
+	} elsif ($mode eq 'test') {
+		if ($datatype eq 'SHAPE') {
+			die "\x1B[34mError! Incorrect column number in the datafile, $datafile\x1B[0m\n" unless ($colnumber == 4);
+		} elsif ($datatype eq 'PARS' or $datatype eq 'DMSseq') {   
+			die "\x1B[34mError! Incorrect column number in the datafile, $datafile\x1B[0m" unless ($colnumber == 5);
+		} else {
+			die "\x1B[34mError! Only SHAPE, PARS or DMSseq data is is accepted for checking the file format, $datafile\x1B[0m\n";
+		}
+	} else {
+		die "\x1B[34mError! Only train or test mode is accepted for checking the file format\x1B[0m\n";
+	}
+}
+
+sub checkStructureDir {
+	my ($structureDir, $datafile, $mode) = @_;
+	unless (-d $structureDir && -r $structureDir) {  # unreadable Dir
+		die "\x1B[34mError! the directory for structure files are not readable: $structureDir\x1B[0m\n";
+	}
+	foreach my $RNA (@{extractRNAname($datafile)}) {
+		unless (-f "$structureDir/$RNA.ct" && -r "$structureDir/$RNA.ct") {
+			die "\x1B[34mError! can't find the structure file for $mode RNA: $structureDir/$RNA.ct\x1B[0m\n";
+		}
+	}
+}
+
+sub checkOutDir {
+	my $outDir = shift;
+	if (-e $outDir && -w $outDir) {  # writable dir
+		return ();
+	} else {
+		system("mkdir -p $outDir");
+		unless (-e $outDir && -w $outDir) {
+			die "\x1B[34mError! unable to create outdir: $outDir\x1B[0m\n";
+		}
+	}
+}
+										       
+sub extractRNAname {
+	my $datafile = shift;
+	my %RNAname = ();
+	open (IN, $datafile) or die;
+	while (<IN>) {
+		chomp;
+		my @t = split("\t", $_);
+		$RNAname{$t[0]} = 1 if ($t[0] ne 'RNA');
+	}
+	close (IN);
+	my @RNAname = keys %RNAname;
+	return(\@RNAname);
+}
+
+sub pairRatioFromConstant {
+	my ($pairRatioMode, $pairRatioFile) = @_;
+	die "\x1B[34mError! File for recording the pair ratio information already exists, $pairRatioFile\n       please either remove it or change the file name by -f\x1B[0m\n" if (-e $pairRatioFile);
+
+	open (OUT, ">$pairRatioFile") or die;
+	print OUT "0.534558833156579\n";
+	close (OUT);
+}
+
+sub pairRatioFromTrainingRNA {
+	my ($pairRatioFile, $structureDir, $trainData) = @_;
+	die "\x1B[34mError! File for recording the pair ratio information already exists, $pairRatioFile\n       please either remove it or change the file name by -f\x1B[0m\n" if (-e $pairRatioFile);
+
+	my $allbases = 0;
+	my $pairbases = 0;
+	foreach my $RNA (@{extractRNAname($trainData)}) {
+		open (IN, "$structureDir/$RNA.ct") or die;
+		while (<IN>) {
+			chomp;
+			my @t = split(" ", $_);
+			if (@t == 6) {
+				$allbases ++;
+				$pairbases ++ if ($t[4]);
+			}
+		}
+		close (IN);
+	}
+
+	open (OUT, ">$pairRatioFile") or die;
+	print OUT $pairbases/$allbases, "\n";
+	close (OUT);
+}
+
+sub pairRatioFromPartitionFunction {
+	my ($pairRatioFile, $trainData, $testData, $cpunumber, $sequenceDir) = @_;
+	die "\x1B[34mError! File for recording the pair ratio information already exists, $pairRatioFile\n       please either remove it or change the file name by -f\x1B[0m\n" if (-e $pairRatioFile);
+	die "\x1B[34mError! The sequence directory should be provided\x1B[0m\n" if ($sequenceDir eq "thisoptionisnotinput");
+	die "\x1B[34mError! The sequence directory is not readable: $sequenceDir\x1B[0m\n" unless (-d $sequenceDir && -r $sequenceDir);
+
+	open (OUT, ">$pairRatioFile") or die;
+	my @RNAs = (@{extractRNAname($trainData)}, @{extractRNAname($testData)});
+	foreach my $RNA (@RNAs) {
+		my $pairRatio = &calculatePairRatioFromPfs($RNA, "$sequenceDir/$RNA.fa");
+		print OUT "$RNA\t$pairRatio\n";
+	}
+	close (OUT);
+}
+
+sub calculatePairRatioFromPfs {
+	my ($RNA, $sequenceFile) = @_;
+	die "\x1B[34mError! Sequence file is not readable: $sequenceFile\x1B[0m\n" unless (-e $sequenceFile && -r $sequenceFile);
+	
+	my $date = gmtime(); $date =~ tr/ :/__/; 
+	system("DATAPATH=$DATAPATH/ $EXEPATH/AveragePairProb $sequenceFile >tmp.$date.txt");
+	
+	open (IN, "tmp.$date.txt") or die;
+	chomp(my $pairRatio=<IN>);
+	close (IN);
+	unlink "tmp.$date.txt";
+
+	if ($pairRatio) {
+		return($pairRatio);
+	} else {
+		die "\x1B[34mError: Fail to calculate the pair ratio for $RNA by the partition function\x1B[0m\n";
+	}
+}
+
+sub getOutlierRange {
+	my ($valuerange, $mode) = @_;
+	my @values = split(':', $valuerange);
+	if (@values == 2) {
+		my ($min, $max) = @values;
+		if ($min < $max) {
+			return($min, $max);
+		} else {
+			die "\x1B[34mError! Incorrect format for the $mode range, e.g. 1:3, -1:2, -0.5:0.5 (min first and then max)\x1B[0m";
+		}
+	} else {
+		die "\x1B[34mError! Incorrect format for the $mode range, e.g. 1:3, -1:2, -0.5:0.5 (min and max seperated by a colon)\x1B[0m\n";
+	}
+}
+
+sub getRootPath {
+	my $scriptname = $0;
+	$scriptname =~ s/\/RME-Preprocess$//g;
+	return("$scriptname/../");
+}

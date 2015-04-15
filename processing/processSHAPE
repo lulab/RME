@@ -1,0 +1,76 @@
+#! /bin/bash
+
+if [ $# -lt 5 ] 
+then echo "Usage:
+    $0 [traindata] [testdata] [structureDir] [outDir] [pairRatioFile] [normMode] [outlierMode] [bottomOutlier] [topOutlier]
+
+       traindata      file containing training data, e.g. example/dat/data/SHAPE.train.23SrRNA.data
+       testdata       file containing test data, e.g. example/dat/data/SHAPE.test.data
+       structureDir   directory containing structure files for all RNAs, e.g. example/dat/structure/
+       outDir         directory for output files, e.g. example/1.processing-data/
+       pairRatioFile  file providing class prior for paired bases, e.g. example/dat/paired_ratio/pair_ratio.txt
+
+       normMode       mode for different normalization strategy, OPTIONAL, default is 'quantile'
+           quantile quantile normalization on SHAPE data
+           28rule   normalization following the 2%/8% rule, that is excluding the top 2% of reactivities and normalized by the average of the next 8% for each RNA
+           no       use downloaded SHAPE reactivity directly
+
+       outlierMode    mode for dealing with outliers, OPTIONAL, default is 'use'
+           use      use outliers normally
+           cap      cap outliers to topOutlier (reset data larger than it to it) and bottomOutlier (reset data smaller than it to it)
+           filter   filter outliers and not use them in either training or testing
+       bottomOutlier  define data as outlier if it below the bottomOutlier, default is the minimum, OPTIONAL
+       topOutlier     define data as outlier if it exceed the topOutlier, default is the maximum, OPTIONAL         
+
+
+    Example: processSHAPE example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/dat/structure example/1.processing-data example/dat/data/pair_ratio.txt
+             processSHAPE example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/dat/structure example/1.processing-data example/dat/data/pair_ratio.txt no  # change the normalization strategy
+             processSHAPE example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/dat/structure example/1.processing-data example/dat/data/pair_ratio.txt quantile cap 0 2  # change the mode for dealing with outliers
+"
+     exit 113
+fi
+EXEPATH=`dirname $BASH_SOURCE`
+
+traindata=$1
+testdata=$2
+structureDir=$3
+outdir=$4
+pair_ratio=$5 
+if [ $# -ge 6 ]; then normMode=$6; else normMode='quantile'; fi
+if [ $# -ge 7 ]; then outlierMode=$7; else outlierMode='use'; fi
+mkdir -p $outdir/SHAPE
+
+# 1. normalization on SHAPE reactivity for different RNAs
+if [ "$normMode"x == "quantile"x ]  # quantile normalization  
+then Rscript $EXEPATH/quantileNormalization.R -i $traindata -o $outdir/SHAPE/`basename $traindata`.normed -n $outdir/SHAPE/SHAPE.quantileTarget.txt -m train
+	 Rscript $EXEPATH/quantileNormalization.R -i $testdata -o $outdir/SHAPE/`basename $testdata`.normed -n $outdir/SHAPE/SHAPE.quantileTarget.txt -m test
+
+elif [ "$normMode"x == "28rule"x ]  # normalization follows the 2%/8% rule
+then Rscript $EXEPATH/28ruleNormalization.R -i $traindata -o $outdir/SHAPE/`basename $traindata`.normed
+     Rscript $EXEPATH/28ruleNormalization.R -i $testdata -o $outdir/SHAPE/`basename $testdata`.normed
+
+elif [ "$normMode"x == "no"x ]  # no normalization, use raw data directly without additional normalization
+then cp $traindata $outdir/SHAPE/`basename $traindata`.normed
+	 cp $testdata $outdir/SHAPE/`basename $testdata`.normed
+
+else echo "The normalization strategy '$normMode' has not been implemented"
+	 exit 113
+fi
+
+
+# 2. get data range for outlier definition
+cat $outdir/SHAPE/`basename $traindata`.normed $outdir/SHAPE/`basename $testdata`.normed >$outdir/SHAPE/SHAPE.data-range.txt
+if [ $# -ge 8 ]; then bottomOutlier=$8; else bottomOutlier=`cat $outdir/SHAPE/SHAPE.data-range.txt |grep -v "Reactivity" |awk -v min=10000 'NR!=1{if($3<min) min=$3} END {print min}'`; fi
+if [ $# -ge 9 ]; then topOutlier=$9; else topOutlier=`cat $outdir/SHAPE/SHAPE.data-range.txt |grep -v "Reactivity" |awk -v max=-10000 'NR!=1{if($3>max) max=$3} END {print max}'`; fi
+
+# 3. distribution fitting on training RNAs
+Rscript $EXEPATH/distributionFitting.R -i $outdir/SHAPE/`basename $traindata`.normed -o $outdir/SHAPE/SHAPE.pairParameter.txt -d gev -c pair
+Rscript $EXEPATH/distributionFitting.R -i $outdir/SHAPE/`basename $traindata`.normed -o $outdir/SHAPE/SHAPE.loopParameter.txt -d gamma -c loop
+
+# 4. calculation of posterior paring probabilities
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/SHAPE/`basename $traindata`.normed -O $outdir/SHAPE -o $outdir/SHAPE/`basename $traindata`.normed.prob.data -r $pair_ratio -p $outdir/SHAPE/SHAPE.pairParameter.txt -l $outdir/SHAPE/SHAPE.loopParameter.txt -m $outlierMode -b $bottomOutlier -t $topOutlier
+Rscript $EXEPATH/posteriorPairingProb.R -i $outdir/SHAPE/`basename $testdata`.normed -O $outdir/SHAPE -o $outdir/SHAPE/`basename $testdata`.normed.prob.data -r $pair_ratio -p $outdir/SHAPE/SHAPE.pairParameter.txt -l $outdir/SHAPE/SHAPE.loopParameter.txt -m $outlierMode -b $bottomOutlier -t $topOutlier
+
+# 5. prepare files for training and test
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/SHAPE/`basename $traindata`.normed.prob.data train 4 $structureDir/*.ct >$outdir/SHAPE.for-optimize-parameter.txt
+perl $EXEPATH/getFullLenAndStruct.pl $outdir/SHAPE/`basename $testdata`.normed.prob.data test 4 $structureDir/*.ct >$outdir/SHAPE.for-test.txt

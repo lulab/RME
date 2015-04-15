@@ -4,30 +4,31 @@
 PREFIX = /usr/local
 ROOTPATH = .
 RSPATH = RNAstructure-src
-BINPATH = $(PREFIX)/bin
-EXEPATH = $(PREFIX)/libexec/RME
-DATPATH = $(PREFIX)/share/RME/data_tables
+BINPATH = bin
+EXEPATH = libexec/RME
+DATAPATH = share/RME/data_tables
 
 CXX = g++
-CXXFLAGS = -O3 -fsched-spec-load -I${RSPATH}
+CXXFLAGS = -O2 -I${RSPATH}
 LDFLAGS = -s
 LINK = ${CXX} ${LDFLAGS} -o $@
 INSTALL = install
 
-OUTDIRS = bin bin/exec
+OUTDIRS = bin libexec/RME
 
 PROC_EXE = distributionFitting.R getFullLenAndStruct.pl \
 	posteriorPairingProb.R quantileNormalization.R \
-	readCountNormalization.R
+	readCountNormalization.R 28ruleNormalization.R \
+	processDMSseq processSHAPE processPARS
 PROC_EXE_IN = $(addprefix processing/, $(PROC_EXE))
-PROC_EXE_OUT = $(addprefix bin/exec/, $(PROC_EXE))
+PROC_EXE_OUT = $(addprefix libexec/RME/, $(PROC_EXE))
 PROC_EXE_INST = $(addprefix $(EXEPATH)/, $(PROC_EXE))
 
-PROC_BIN = processDMSseq processSHAPE processPARS
+PROC_BIN = RME-Preprocess
 PROC_BIN_IN = $(addsuffix .in, $(addprefix processing/, $(PROC_BIN)))
 PROC_BIN_OUT = $(addprefix bin/, $(PROC_BIN))
 
-ALL_BIN = RME RME-Optimize processSHAPE processDMSseq processPARS
+ALL_BIN = RME RME-Optimize RME-Preprocess
 
 # The text interface command line parser.
 CMD_LINE_PARSER = \
@@ -64,28 +65,24 @@ RME_FILES = \
 	${ROOTPATH}/RME/RMEPost.o \
 	${ROOTPATH}/RME/Utils.o
 
-.PHONY: RME scorer ct2dot dot2ct processing
+.PHONY: RME processing
 
-all: $(OUTDIRS) RME processing scorer ct2dot dot2ct
+all: $(OUTDIRS) data_tables RME processing scorer ct2dot dot2ct partition 
 
 install: all
 	# create target directory
-	$(INSTALL) -d ${BINPATH} $(EXEPATH) ${DATPATH}
+	$(INSTALL) -d $(PREFIX)/${BINPATH} $(PREFIX)/$(EXEPATH) $(PREFIX)/${DATAPATH}
 	# install programs
-	$(INSTALL) -T RME/RME.in ${BINPATH}/RME
-	$(INSTALL) -T RME/RME-Optimize.in $(BINPATH)/RME-Optimize
-	$(INSTALL) -T processing/processSHAPE.in $(BINPATH)/processSHAPE
-	$(INSTALL) -T processing/processPARS.in $(BINPATH)/processPARS
-	$(INSTALL) -T processing/processDMSseq.in $(BINPATH)/processDMSseq
+	$(INSTALL) -T RME/RME.in $(PREFIX)/${BINPATH}/RME
+	$(INSTALL) -T RME/RME-Optimize.in $(PREFIX)/$(BINPATH)/RME-Optimize
+	$(INSTALL) -T processing/RME-Preprocess.in $(PREFIX)/$(BINPATH)/RME-Preprocess
 	# substitute variables
-	sed -i "s#{DATAPATH}#'$(DATPATH)'#;s#{EXEPATH}#'$(EXEPATH)'#" $(BINPATH)/RME
-	sed -i "s#{DATAPATH}#'$(DATPATH)'#;s#{EXEPATH}#'$(EXEPATH)'#" $(BINPATH)/RME-Optimize
-	sed -i "s#{EXEPATH}#'$(EXEPATH)'#" $(BINPATH)/processSHAPE
-	sed -i "s#{EXEPATH}#'$(EXEPATH)'#" $(BINPATH)/processPARS
-	sed -i "s#{EXEPATH}#'$(EXEPATH)'#" $(BINPATH)/processDMSseq
+	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME
+	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME-Optimize
+	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME-Preprocess
 	# install required data files
-	$(INSTALL) -t $(EXEPATH) bin/exec/*
-	$(INSTALL) --mode 644 -t $(DATPATH) data_tables/*
+	$(INSTALL) -t $(PREFIX)/$(EXEPATH) $(EXEPATH)/*
+	$(INSTALL) --mode 644 -t $(PREFIX)/$(DATAPATH) $(DATAPATH)/*
 	
 subvars-inst: $(addprefix $(PREFIX)/$(BINPATH), $(ALL_BIN))
 	sed -i "s#{DATAPATH}#'$(DATPATH)'#; s#{EXEPATH}#'$(EXEPATH)'#" $^
@@ -108,39 +105,48 @@ scorer: bin/scorer
 bin/scorer: ${RSPATH}/scorer/Scorer_Interface.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
 	${LINK} ${RSPATH}/scorer/Scorer_Interface.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
 	
+partition: bin/partition
+${EXEPATH}/partition: ${RSPATH}/pfunction/partition.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
+	${LINK} ${RSPATH}/pfunction/partition.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
+	
 # Build RME
-RME: bin/RME bin/RME-Optimize
+RME: bin/RME bin/RME-Optimize bin/partition ${EXEPATH}/AveragePairProb
 	
-bin/RME: RME/RME.in bin/exec/RME 
-	sed "s#{DATAPATH}#'${CURDIR}/data_tables'#; s#{EXEPATH}#'${CURDIR}/bin/exec'#" $< > $@
+bin/RME: RME/RME.in ${EXEPATH}/RME 
+	sed "s#{DATAPATH}#${DATAPATH}#; s#{EXEPATH}#${EXEPATH}#" $< > $@
 	chmod 755 $@
 	
-bin/RME-Optimize:  RME/RME-Optimize.in bin/exec/RME-Optimize
-	sed "s#{DATAPATH}#'${CURDIR}/data_tables'#; s#{EXEPATH}#'${CURDIR}/bin/exec'#" $< > $@
+bin/RME-Optimize:  ${ROOTPATH}/RME/RME-Optimize.in ${EXEPATH}/RME-Optimize
+	sed "s#{DATAPATH}#${DATAPATH}#; s#{EXEPATH}#${EXEPATH}#" $< > $@
 	chmod 755 $@
 	
-bin/exec/RME:  RME/RMEInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
+bin/partition:  ${ROOTPATH}/RME/partition.in ${EXEPATH}/partition
+	sed "s#{DATAPATH}#${DATAPATH}#; s#{EXEPATH}#${EXEPATH}#" $< > $@
+	chmod 755 $@
+	
+${EXEPATH}/RME:  ${ROOTPATH}/RME/RMEInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
 	${LINK} ${ROOTPATH}/RME/RMEInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread
 	
-bin/exec/RME-Optimize:  RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
+${EXEPATH}/RME-Optimize:  ${ROOTPATH}/RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
 	${LINK} ${ROOTPATH}/RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread 
 
-processing: $(PROC_BIN_OUT) $(PROC_EXE_OUT)
+${EXEPATH}/AveragePairProb:  ${ROOTPATH}/RME/AveragePairProb.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
+	${LINK} ${ROOTPATH}/RME/AveragePairProb.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread
 
-bin/processSHAPE: processing/processSHAPE.in
-	sed "s#{EXEPATH}#'${CURDIR}/bin/exec'#" $< > $@
-	chmod 755 $@
+processing: $(PROC_EXE_OUT) $(PROC_BIN_OUT)
 	
-bin/processPARS: processing/processPARS.in
-	sed "s#{EXEPATH}#'${CURDIR}/bin/exec'#" $< > $@
-	chmod 755 $@
+data_tables: $(DATAPATH)
+
+$(DATAPATH): $(RSPATH)/data_tables
+	mkdir -p $(DATAPATH)
+	cp $</* $@
 	
-bin/processDMSseq: processing/processDMSseq.in
-	sed "s#{EXEPATH}#'${CURDIR}/bin/exec'#" $< > $@
+bin/RME-Preprocess: $(ROOTPATH)/processing/RME-Preprocess.in
+	sed "s#{DATAPATH}#${DATAPATH}#; s#{EXEPATH}#${EXEPATH}#" $< > $@
 	chmod 755 $@
 	
 $(PROC_EXE_OUT):
-	cp $(PROC_EXE_IN) bin/exec
+	cp $(PROC_EXE_IN) ${EXEPATH}
 	
 %.o: %.cpp
 	$(CXX) -c -o $@ $(CXXFLAGS) $<
@@ -154,5 +160,5 @@ $(PROC_EXE_OUT):
 clean:
 	find . -depth -name '*~' -delete
 	find . -depth -name '*.o' -delete
-	rm -rf bin
+	rm -rf bin share libexec
 

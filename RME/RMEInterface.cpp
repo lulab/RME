@@ -48,6 +48,10 @@ struct RMEParam
     // max helix length
     int maxHelixLen;
     std::vector<std::string> maxHelixLenOptions;
+    // RME-pre flag
+    std::vector<std::string> preOnlyOptions;
+    // RME-post flag
+    std::vector<std::string> postOnlyOptions;
     // initialization
     RMEParam():
         nThreads(4),
@@ -101,6 +105,16 @@ void AddOptions(ParseCommandLine* parser, RMEParam& params)
     params.paramFileOptions.push_back("--params");
     parser->addOptionFlagsWithParameters(params.paramFileOptions,
                                          "Name of the file containing parameters. Each line contains a (name, value) pair. ");
+    
+    params.preOnlyOptions.push_back("-pre");
+    params.preOnlyOptions.push_back("--pre");
+    parser->addOptionFlagsNoParameters(params.preOnlyOptions,
+                                         "Only use RME-pre. Default is to combine RME-pre and RME-post.");
+    
+    params.postOnlyOptions.push_back("-post");
+    params.postOnlyOptions.push_back("--post");
+    parser->addOptionFlagsNoParameters(params.postOnlyOptions,
+                                         "Only use RME-post. Default is to combine RME-pre and RME-post.");
 }
 
 void ReadParamFile(std::string& fileName, RMEParam& params)
@@ -197,6 +211,25 @@ bool GetOptions(ParseCommandLine* parser, RMEParam& params)
         parser->setOptionInteger(params.nThreadsOptions, params.nThreads);
         if(params.nThreads < 1)
             parser->setError("number of threads");
+    }
+    
+    if(!parser->isError() && parser->contains(params.preOnlyOptions))
+    {
+        if(parser->contains(params.postOnlyOptions))
+            parser->setError("--pre and --post are mutually exclusive");
+        else
+            params.m = 0;
+    }
+    
+    if(!parser->isError() && parser->contains(params.postOnlyOptions))
+    {
+        if(parser->contains(params.preOnlyOptions))
+            parser->setError("--pre and --post are mutually exclusive");
+        else
+        {
+            params.gamma1 = 0;
+            params.gamma2 = 0;
+        }
     }
 
     return !parser->isError();
