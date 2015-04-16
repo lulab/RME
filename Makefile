@@ -10,8 +10,9 @@ DATAPATH = share/RME/data_tables
 
 CXX = g++
 CXXFLAGS = -O2 -I${RSPATH}
-LDFLAGS = -s
+LDFLAGS = 
 LINK = ${CXX} ${LDFLAGS} -o $@
+STRIP = strip
 INSTALL = install
 
 OUTDIRS = bin libexec/RME
@@ -67,7 +68,7 @@ RME_FILES = \
 
 .PHONY: RME processing
 
-all: $(OUTDIRS) data_tables RME processing scorer ct2dot dot2ct partition 
+all: $(OUTDIRS) data_tables RME processing scorer ct2dot dot2ct
 
 install: all
 	# create target directory
@@ -94,12 +95,12 @@ $(OUTDIRS):
 ct2dot: bin/ct2dot
 bin/ct2dot: ${RSPATH}/ct2dot/ct2dot.o ${CMD_LINE_PARSER} ${RNA_FILES}
 	${LINK} ${RSPATH}/ct2dot/ct2dot.o ${CMD_LINE_PARSER} ${RNA_FILES}
-
+	
 # Build the dot2ct text interface.
 dot2ct: bin/dot2ct
 bin/dot2ct: ${RSPATH}/dot2ct/dot2ct.o ${CMD_LINE_PARSER} ${RNA_FILES}
 	${LINK} ${RSPATH}/dot2ct/dot2ct.o ${CMD_LINE_PARSER} ${RNA_FILES}
-
+	
 # Build the scorer interface.
 scorer: bin/scorer
 bin/scorer: ${RSPATH}/scorer/Scorer_Interface.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
@@ -110,7 +111,7 @@ ${EXEPATH}/partition: ${RSPATH}/pfunction/partition.o ${CMD_LINE_PARSER} ${STRUC
 	${LINK} ${RSPATH}/pfunction/partition.o ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES}
 	
 # Build RME
-RME: bin/RME bin/RME-Optimize bin/partition ${EXEPATH}/AveragePairProb
+RME: bin/RME bin/RME-Optimize ${EXEPATH}/AveragePairProb
 	
 bin/RME: RME/RME.in ${EXEPATH}/RME 
 	sed "s#{DATAPATH}#${DATAPATH}#; s#{EXEPATH}#${EXEPATH}#" $< > $@
@@ -129,10 +130,10 @@ ${EXEPATH}/RME:  ${ROOTPATH}/RME/RMEInterface.o ${RME_FILES} ${CMD_LINE_PARSER} 
 	
 ${EXEPATH}/RME-Optimize:  ${ROOTPATH}/RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
 	${LINK} ${ROOTPATH}/RME/RMEOptimizeInterface.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread 
-
+	
 ${EXEPATH}/AveragePairProb:  ${ROOTPATH}/RME/AveragePairProb.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} 
 	${LINK} ${ROOTPATH}/RME/AveragePairProb.o ${RME_FILES} ${CMD_LINE_PARSER} ${STRUCTURE_SCORER} ${RNA_FILES} -lpthread
-
+	
 processing: $(PROC_EXE_OUT) $(PROC_BIN_OUT)
 	
 data_tables: $(DATAPATH)
