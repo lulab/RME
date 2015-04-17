@@ -23,8 +23,8 @@ Please download the software from https://github.com/lulab/RME/releases
 1. Linux
 2. Perl (version >= 5.10.1)
 3. R (version >= 3.1.0)
-4. Bioconductor 
-5. R packages: preprocessCore argparse mixtools reshape MASS evir
+4. R packages: argparse mixtools reshape MASS evir
+5. Bioconductor package: [preprocessCore](http://www.bioconductor.org/packages/release/bioc/html/preprocessCore.html)
 
 
 ## Installation
@@ -85,29 +85,29 @@ example/dat/data/DMSseq.test.data
 
 #### d. Format of data files
 
-For 1-dimensional probing data (i.e. SHAPE data), training files contains 5 columns separated by a TAB.
+For 1-dimensional probing data (i.e. SHAPE data), training files contain 5 columns separated by a TAB. The first lines of the files specify the column name (given in parentheses).
 
 | Column | Description |
 |:----:| ------------- |
-| 1 |  name of RNA |
-| 2 |  index on the RNA, 1-based |
-| 3 |  reactivity on this base |
-| 4 |  base information in capitals, ACGU |
-| 5 |  structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases |
+| 1 |  name of RNA (RNA)|
+| 2 |  index on the RNA, 1-based (Index)|
+| 3 |  reactivity on this base (Reactivity)|
+| 4 |  base information in capitals, ACGU (Base)|
+| 5 |  structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases (Structure)|
 
-For 2-dimensional probing data (i.e. PARS and DMS-seq data), training files contains 6 columns by a TAB.
+For 2-dimensional probing data (i.e. PARS and DMS-seq data), training files contain 6 columns by a TAB. The first lines of the files specify the column name (given in parentheses).
 
 | Column | Description |
 |:----:| ------------- |
-| 1 |  name of RNA |
-| 2 |  index on the RNA, 1-based |
-| 3 |  read count 1 for this base, V1 for PARS data and control for DMS-seq data |
-| 4 |  read count 2 for this base, S1 for PARS data and vivo for DMS-seq data |
-| 5 |  base information in capitals, ACGU |
-| 6 |  structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases |
+| 1 |  name of RNA (RNA)|
+| 2 |  index on the RNA, 1-based (Index)|
+| 3 |  read count 1 for this base, V1 for PARS data and control for DMS-seq data (V1 or Control)|
+| 4 |  read count 2 for this base, S1 for PARS data and vivo for DMS-seq data (S1 or Vivo)|
+| 5 |  base information in capitals, ACGU (Base)|
+| 6 |  structure information for this base, 0 stands for single-standed bases, 1 strands for paired bases (Structure)|
 
 Files for test RNAs are similar with training files except that the last column (structure information) is missing.
-Note that bases with probing signals are not included in these files. See example/dat/data/README for detail.
+Note that bases without probing signals are not included in these files. See example/dat/data/README for detail.
 
 
 ### Step 2: transform structure probing data into pairing probability  
@@ -138,25 +138,30 @@ example/1.processing-data/DMSseq.for-test.txt
 
 #### c. Advanced options of RME-Preprocess
 
-We provide several options for calculating the prior probability of the paired bases, including using a constant (0.535, the default setting), calculating from the training RNAs (train) and calculating from partition function for each RNA (partition). You can select one of them by specify the -r option. Note that when using the partition mode, you should also specify the directory of the sequence files by -q.
+We provide several methods for calculating the prior probability of the paired bases, including using a constant (0.535, the default setting), calculating from the training RNAs (train) and calculating from partition function for each RNA (partition). You can select one of them by specify the -r option. Note that when using the partition mode, you should also specify the directory of the sequence files by -q.
+
 ```bash
 RME-Preprocess -r constant -d SHAPE -s example/dat/structure example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/1.processing-data
 RME-Preprocess -r train -d PARS -s example/dat/structure example/dat/data/PARS.train.25SrRNA.data example/dat/data/PARS.test.data example/1.processing-data
 RME-Preprocess -r partition -q example/dat/sequence -d DMSseq -s example/dat/structure example/dat/data/DMSseq.train.25SrRNA.data example/dat/data/DMSseq.test.data example/1.processing-data
 ```
 
-Meanwhile, for SHAPE data, we provided three types of normalization mode, quantile normalization (Bolstad et al., 2003) (quantile, the default setting), 2%/8% rule normalization (Ouyang et al., 2013) (28rule) and no normalization (no). You can select one of them for SHAPE data by specify the -n option.
+Meanwhile, for SHAPE data, we provided three types of normalization methods, quantile normalization (Bolstad et al., 2003) (quantile, the default setting), 2%/8% rule normalization (Ouyang et al., 2013) (28rule) and no normalization (no). You can select one of them for SHAPE data by specify the -n option.
+
 ```bash
 RME-Preprocess -n quantile -d SHAPE -s example/dat/structure example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/1.processing-data
 RME-Preprocess -n 28rule -d SHAPE -s example/dat/structure example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/1.processing-data
 RME-Preprocess -n no -d SHAPE -s example/dat/structure example/dat/data/SHAPE.train.23SrRNA.data example/dat/data/SHAPE.test.data example/1.processing-data
 ```
-Please see more help information by using the -h option.
+You can get more information about usage of `RME-Preprocess` by typing `RME-Preprocess -h`.
 
 
 ### Step 3: optimize the paramter for RME
 
 #### a. Parameter optimization by RME-Optimize
+
+The step 3 is optional. You can either optimize the parameters of RME by using your own training RNAs, or directly use our optimal parameters (stored in example/2.optimize-param/*.params.txt)
+
 ```bash
 mkdir example/2.optimize-param/
 cd example/2.optimize-param/
@@ -205,7 +210,7 @@ example/3.prediction/DMSseq/*.ct
 
 #### c. Advanced options
 
-We provided the -pre and -post options to enable the users to select either part for structure prediction. This allows to test the importance of integrating RME-pre and RME-post into RME.
+We provided the `-pre` and `-post` options to enable the users to select either part for structure prediction. This allows the users to test the importance of integrating `RME-pre` and `RME-post` into `RME`.
 
 ## Output files
 
