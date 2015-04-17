@@ -68,7 +68,7 @@ RME_FILES = \
 
 .PHONY: RME processing
 
-all: $(OUTDIRS) data_tables RME processing scorer ct2dot dot2ct
+all: $(OUTDIRS) data_tables RME processing
 
 install: all
 	# create target directory
