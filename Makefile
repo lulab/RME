@@ -74,9 +74,9 @@ install: all
 	# create target directory
 	$(INSTALL) -d $(PREFIX)/${BINPATH} $(PREFIX)/$(EXEPATH) $(PREFIX)/${DATAPATH}
 	# install programs
-	$(INSTALL) -T RME/RME.in $(PREFIX)/${BINPATH}/RME
-	$(INSTALL) -T RME/RME-Optimize.in $(PREFIX)/$(BINPATH)/RME-Optimize
-	$(INSTALL) -T processing/RME-Preprocess.in $(PREFIX)/$(BINPATH)/RME-Preprocess
+	$(INSTALL) RME/RME.in $(PREFIX)/${BINPATH}/RME
+	$(INSTALL) RME/RME-Optimize.in $(PREFIX)/$(BINPATH)/RME-Optimize
+	$(INSTALL) processing/RME-Preprocess.in $(PREFIX)/$(BINPATH)/RME-Preprocess
 	# substitute variables
 	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME
 	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME-Optimize
