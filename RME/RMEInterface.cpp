@@ -106,6 +106,7 @@ void AddOptions(ParseCommandLine* parser, RMEParam& params)
     params.noHelixWeightOptions.push_back("--no-helix-weight");
     parser->addOptionFlagsNoParameters(params.noHelixWeightOptions, "Do not reweight based on helix length in RME-post. Default is to reweight.");
     
+    params.dataTypeOptions.push_back("-d");
     params.dataTypeOptions.push_back("--data-type");
     parser->addOptionFlagsWithParameters(params.dataTypeOptions, "Structure probing data type. One of 'shape', 'pars' and 'dmsseq'. If set, the default parameters for that data type will be used. Default is not set.");
     
