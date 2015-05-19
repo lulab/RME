@@ -2,6 +2,8 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <algorithm>
+#include <cctype>
 using namespace std;
 #include <string.h>
 #include <errno.h>
@@ -21,6 +23,9 @@ struct RMEParam
     // parameter file
     std::string paramFile;
     std::vector<std::string> paramFileOptions;
+    // data type
+    std::string dataType;
+    std::vector<std::string> dataTypeOptions;
     // threads
     int nThreads;
     std::vector<std::string> nThreadsOptions;
@@ -48,6 +53,8 @@ struct RMEParam
     // max helix length
     int maxHelixLen;
     std::vector<std::string> maxHelixLenOptions;
+    // disable helix weight
+    std::vector<std::string> noHelixWeightOptions;
     // RME-pre flag
     std::vector<std::string> preOnlyOptions;
     // RME-post flag
@@ -95,7 +102,13 @@ void AddOptions(ParseCommandLine* parser, RMEParam& params)
 
     params.maxHelixLenOptions.push_back("--max-helix-len");
     parser->addOptionFlagsWithParameters(params.maxHelixLenOptions, "Maximal helix length. Default is 4.");
-
+    
+    params.noHelixWeightOptions.push_back("--no-helix-weight");
+    parser->addOptionFlagsNoParameters(params.noHelixWeightOptions, "Do not reweight based on helix length in RME-post. Default is to reweight.");
+    
+    params.dataTypeOptions.push_back("--data-type");
+    parser->addOptionFlagsWithParameters(params.dataTypeOptions, "Structure probing data type. One of 'shape', 'pars' and 'dmsseq'. If set, the default parameters for that data type will be used. Default is not set.");
+    
     params.nThreadsOptions.push_back("-p");
     params.nThreadsOptions.push_back("--threads");
     parser->addOptionFlagsWithParameters(params.nThreadsOptions,
@@ -205,7 +218,41 @@ bool GetOptions(ParseCommandLine* parser, RMEParam& params)
         if(params.maxHelixLen < 0)
             parser->setError("maximum helix length");
     }
-
+    
+    if(!parser->isError() && parser->contains(params.noHelixWeightOptions))
+    {
+        params.minHelixLen = -1;
+        params.maxHelixLen = 0;
+    }
+    
+    // set default parameters
+    if(!parser->isError() && parser->contains(params.dataTypeOptions))
+    {
+        params.dataType = parser->getOptionString(params.dataTypeOptions, false);
+        std::transform(params.dataType.begin(), params.dataType.end(),
+                       params.dataType.begin(), ::tolower);
+        if(params.dataType == "shape")
+        {
+            params.m = 0.6;
+            params.gamma1 = 0.05;
+            params.gamma2 = 0.1;
+        }
+        else if(params.dataType == "pars")
+        {
+            params.m = 0.02;
+            params.gamma1 = 0.6;
+            params.gamma2 = 0.65;
+        }
+        else if(params.dataType == "dmsseq")
+        {
+            params.m = 0.7;
+            params.gamma1 = 0;
+            params.gamma2 = 0.05;
+        }
+        else
+            parser->setError(std::string("Unknown data type '") + params.dataType + "'");
+    }
+    
     if(!parser->isError() && parser->contains(params.nThreadsOptions))
     {
         parser->setOptionInteger(params.nThreadsOptions, params.nThreads);
@@ -218,7 +265,10 @@ bool GetOptions(ParseCommandLine* parser, RMEParam& params)
         if(parser->contains(params.postOnlyOptions))
             parser->setError("--pre and --post are mutually exclusive");
         else
-            params.m = 0;
+        {
+            params.gamma1 = 0;
+            params.gamma2 = 0;
+        }
     }
     
     if(!parser->isError() && parser->contains(params.postOnlyOptions))
@@ -227,8 +277,7 @@ bool GetOptions(ParseCommandLine* parser, RMEParam& params)
             parser->setError("--pre and --post are mutually exclusive");
         else
         {
-            params.gamma1 = 0;
-            params.gamma2 = 0;
+            params.m = 0;
         }
     }
 
@@ -338,6 +387,12 @@ int main(int argc, char** argv)
     {
         // read input data without reference structures
         vector<RMEInputDataRecord> inputData = ReadRMEInputData(params.inFile, false);
+        cout << "Parameters:" << endl;
+        cout << "  m = " << params.m << endl;
+        cout << "  gamma1 = " << params.gamma1 << endl;
+        cout << "  gamma2 = " << params.gamma2 << endl;
+        cout << "  minHelixLen = " << params.minHelixLen << endl;
+        cout << "  maxHelixLen = " << params.maxHelixLen  << "\n" << endl;
         // create output directory
         if(!DirExists(params.outDir))
         {
