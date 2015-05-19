@@ -1,6 +1,6 @@
 # RME
 
-A tool for RNA secondary structure prediction with multiple types of experimental probing data. It can use experimental pairing probabilities to restrain the Partition Function, and predict the structure with maximum restrained expected accuray based on a MEA algorithm, MaxExpect (Lu *et al*., 2009 *RNA* ). It is based on the *RNAstructure* (http://rna.urmc.rochester.edu/RNAstructure.html) package. It also provides example scripts for transforming the SHAPE, PARS and DMS-seq data into pairing probability according a posterior probabilistic Model. Moreover, it also contains a utility for optimizing the parameters of RME by RME-Optimize.
+A tool for RNA secondary structure prediction with multiple types of experimental probing data. It can use experimental pairing probabilities to restrain the partition function, and predict the structure with maximum restrained expected accuray based on a MEA algorithm, MaxExpect (Lu *et al*., 2009 *RNA* ). It is based on the *RNAstructure* (http://rna.urmc.rochester.edu/RNAstructure.html) package. It also provides preprocessing scripts for transforming the SHAPE, PARS and DMS-seq data into pairing probability according a posterior probabilistic model. Moreover, it also contains a utility for optimizing the parameters of RME by RME-Optimize.
 
 For updates, please refer to https://github.com/lulab/RME
 
@@ -162,7 +162,7 @@ You can get more information about the usage of `RME-Preprocess` by typing `RME-
 ### Step 3: Structure prediction by RME
 
 #### a. Structure prediction by RME
-The RME software accepts 2 input parameters, a data file containing pairing probability for each test RNA (prepared in Step 2b) and a directory for output files. Meanwhile, we recommended to use the -d option to specify the data type, then RME would use default parameter values for that type. And a -p option specifying the cpu number is quite useful for running in parallel.  
+The RME software accepts 2 input parameters, a data file containing pairing probability for each test RNA (prepared in Step 2b) and a directory for output files. Meanwhile, we recommended to use the -d option to specify the data type, then RME would use default parameter values for that data type. And a -p option specifying the cpu number is quite useful for running in parallel.  
 
 ```bash
 mkdir example/prediction/
@@ -227,15 +227,15 @@ You can get more information about usage of `RME-Optimize` by typing `RME-Optimi
 
 #### b. Output files of step 4
 
-Output files containing the optimal parameters, which can be used in step 3C
+Output files containing the optimal parameters, which can be used in step 3c
 ```
 example/optimize-param/SHAPE.params.txt
 example/optimize-param/PARS.params.txt
 example/optimize-param/DMSseq.params.txt
 ```
 
-Output files recording the detail of the optimizing process
-```
+Output files recording the detail of the optimizing processes
+``
 example/optimize-param/SHAPE.details.txt
 example/optimize-param/PARS.details.txt
 example/optimize-param/DMSseq.details.txt
