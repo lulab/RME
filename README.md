@@ -235,7 +235,7 @@ example/optimize-param/DMSseq.params.txt
 ```
 
 Output files recording the detail of the optimizing processes
-``
+```
 example/optimize-param/SHAPE.details.txt
 example/optimize-param/PARS.details.txt
 example/optimize-param/DMSseq.details.txt
