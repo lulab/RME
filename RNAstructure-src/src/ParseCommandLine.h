@@ -275,7 +275,7 @@ class ParseCommandLine {
 	string usageString;
 
 	// The version number.
-	double version;
+	string version;
 };
 
 #endif /* PARSE_COMMAND_LINE_H */
