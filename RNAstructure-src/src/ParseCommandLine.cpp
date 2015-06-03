@@ -14,7 +14,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ParseCommandLine::ParseCommandLine( string name ) {
 	//software version
-	version = 5.5;
+	version = "1.1.1";
 
 	// Initialize the error flag and the specialized usage flags.
 	error = false;
@@ -232,8 +232,9 @@ void ParseCommandLine::parseLine( int argc, char* argv[] ) {
 		string next = standardVersionFlags[i-1];
 		versionIt = find( cmdLine.begin(), cmdLine.end(), next );
 		if( versionIt != cmdLine.end() ) {
-			cout << interfaceName << ": Version " << version << "." << endl
-			     << "Copyright Mathews Lab, University of Rochester." << endl;
+            //cout << interfaceName << ": Version " << version << "." << endl
+			//     << "Copyright Mathews Lab, University of Rochester." << endl;
+            cout << interfaceName << " version " << version << endl;
 			setError();
 			return;
 		}
