@@ -83,8 +83,8 @@ install: all
 	sed "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" processing/RME-Preprocess.in > $(PREFIX)/$(BINPATH)/RME-Preprocess
 	chmod 755 $(PREFIX)/$(BINPATH)/RME $(PREFIX)/$(BINPATH)/RME-Optimize $(PREFIX)/$(BINPATH)/RME-Preprocess
 	# install required data files
-	$(INSTALL) -t $(PREFIX)/$(EXEPATH) $(EXEPATH)/*
-	$(INSTALL) --mode 644 -t $(PREFIX)/$(DATAPATH) $(DATAPATH)/*
+	$(INSTALL) $(EXEPATH)/* $(PREFIX)/$(EXEPATH) 
+	$(INSTALL) --mode 644 $(DATAPATH)/* $(PREFIX)/$(DATAPATH) 
 	
 subvars-inst: $(addprefix $(PREFIX)/$(BINPATH), $(ALL_BIN))
 	sed -i "s#{DATAPATH}#'$(DATPATH)'#; s#{EXEPATH}#'$(EXEPATH)'#" $^
