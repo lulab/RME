@@ -74,13 +74,14 @@ install: all
 	# create target directory
 	$(INSTALL) -d $(PREFIX)/${BINPATH} $(PREFIX)/$(EXEPATH) $(PREFIX)/${DATAPATH}
 	# install programs
-	$(INSTALL) RME/RME.in $(PREFIX)/${BINPATH}/RME
-	$(INSTALL) RME/RME-Optimize.in $(PREFIX)/$(BINPATH)/RME-Optimize
-	$(INSTALL) processing/RME-Preprocess.in $(PREFIX)/$(BINPATH)/RME-Preprocess
+	#$(INSTALL) RME/RME.in $(PREFIX)/${BINPATH}/RME
+	#$(INSTALL) RME/RME-Optimize.in $(PREFIX)/$(BINPATH)/RME-Optimize
+	#$(INSTALL) processing/RME-Preprocess.in $(PREFIX)/$(BINPATH)/RME-Preprocess
 	# substitute variables
-	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME
-	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME-Optimize
-	sed -i "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" $(PREFIX)/$(BINPATH)/RME-Preprocess
+	sed "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" RME/RME.in > $(PREFIX)/$(BINPATH)/RME
+	sed "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" RME/RME-Optimize.in > $(PREFIX)/$(BINPATH)/RME-Optimize
+	sed "s#{DATAPATH}#$(DATAPATH)#;s#{EXEPATH}#$(EXEPATH)#" processing/RME-Preprocess.in > $(PREFIX)/$(BINPATH)/RME-Preprocess
+	chmod 755 $(PREFIX)/$(BINPATH)/RME $(PREFIX)/$(BINPATH)/RME-Optimize $(PREFIX)/$(BINPATH)/RME-Preprocess
 	# install required data files
 	$(INSTALL) -t $(PREFIX)/$(EXEPATH) $(EXEPATH)/*
 	$(INSTALL) --mode 644 -t $(PREFIX)/$(DATAPATH) $(DATAPATH)/*
