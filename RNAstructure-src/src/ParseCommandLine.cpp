@@ -14,7 +14,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ParseCommandLine::ParseCommandLine( string name ) {
 	//software version
-	version = "1.1.1";
+	version = "1.1";
 
 	// Initialize the error flag and the specialized usage flags.
 	error = false;
