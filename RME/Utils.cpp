@@ -156,7 +156,7 @@ std::vector<std::string> SplitString(const std::string& s, char delim)
 bool MakeDir(const std::string& fileName)
 {
 #ifdef WIN32
-	int status = mkdir(filename.c_str());
+	int status = mkdir(fileName.c_str());
 #else
 	int status = mkdir(fileName.c_str(), 0777);
 #endif
